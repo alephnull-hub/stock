@@ -1,0 +1,507 @@
+<meta name="dash-one-writer">
+<style>
+  .lr { display: flex; flex-direction: column; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); max-width: 72rem; margin-inline: auto; }
+  .lr-head { display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+  .lr-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+  .lr-sub { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); margin: 0; }
+  .lr-take { margin: 0; font-size: var(--cds-font-size-body); line-height: 1.6; max-width: 65ch; }
+  .lr-tabs { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); padding-bottom: var(--cds-gap-xs); }
+  .lr-tab { font: inherit; font-size: var(--cds-font-size-body); background: none; border: 1px solid transparent; border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); color: var(--color-fg-muted); cursor: pointer; }
+  .lr-tab[aria-selected="true"] { color: var(--color-fg); border-color: var(--color-border-line); background: var(--color-panel); }
+  .lr-tab:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+  .lr-page { display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+  .lr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--cds-gap-md); }
+  .lr-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+  .lr-card h2, .lr-card h3 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+  .lr-note { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.5; }
+  .lr-text { margin: 0; line-height: 1.65; max-width: 70ch; }
+  .lr-section-title { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+  .lr-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.1; }
+  .lr-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--cds-gap-sm); }
+  .lr-label { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); letter-spacing: .02em; }
+  .lr-num { font-variant-numeric: tabular-nums; }
+  .lr b { font-weight: 600; }
+  .lr-tablebox { overflow-x: auto; }
+  .lr-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body); font-variant-numeric: tabular-nums; }
+  .lr-table th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+  .lr-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+  .lr-table td.r, .lr-table th.r { text-align: right; white-space: nowrap; }
+  .lr-table tr:last-child td { border-bottom: none; }
+  .lr-wrap { min-width: 14rem; line-height: 1.5; }
+  .lr-pill { display: inline-block; font-size: var(--cds-font-size-caption); padding: 1px var(--cds-pad-sm); border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .lr-ok { color: var(--color-ok); }
+  .lr-warn { color: var(--color-warn); }
+  .lr-bad { color: var(--color-bad); }
+  .lr-muted { color: var(--color-fg-muted); }
+  .lr-pick { gap: var(--cds-gap-md); }
+  .lr-pick-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--cds-gap-sm); flex-wrap: wrap; }
+  .lr-zones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cds-gap-xs); }
+  .lr-zone { border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); display: flex; flex-direction: column; gap: 2px; }
+  .lr-zone.on { border-color: var(--color-ok); }
+  .lr-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr)); gap: var(--cds-gap-xs); }
+  .lr-kv div { display: flex; flex-direction: column; gap: 2px; }
+  .lr-dl { display: flex; flex-direction: column; gap: var(--cds-gap-xs); margin: 0; }
+  .lr-dl dt { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+  .lr-dl dd { margin: 0; line-height: 1.5; }
+  .lr-list { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: var(--cds-gap-xs); line-height: 1.5; }
+  .lr-bar { display: flex; align-items: center; gap: var(--cds-gap-xs); justify-content: flex-end; }
+  .lr-bar span.track { display: inline-block; width: 5rem; height: 6px; border-radius: var(--cds-radius); background: var(--cds-chart-grid); overflow: hidden; }
+  .lr-bar span.fill { display: block; height: 100%; background: var(--cds-chart-muted); }
+  .lr-bar span.fill.top { background: var(--color-ok); }
+  .lr-chart { position: relative; min-height: 18rem; }
+  .lr-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+  .lr-tip .d { color: var(--cds-text-secondary); }
+  .lr-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+  .lr a { color: inherit; text-underline-offset: 2px; }
+  .lr-foot { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.6; margin: 0; }
+  [data-dash-source-state=empty] { color: transparent; }
+  [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+  @media (max-width: 30rem) { .lr-zones { grid-template-columns: 1fr; } }
+</style>
+
+<div class="lr">
+  <header class="lr-head" id="top">
+    <h1 class="lr-title">장기투자 리포트</h1>
+    <p class="lr-sub">기준 <span data-draw="fact" data-source="facts" data-field="value" data-where="key=report_date">—</span> · <span data-draw="fact" data-source="facts" data-field="value" data-where="key=report_kind">—</span> 리포트 · 참고용 분석이며 투자 자문이 아닙니다</p>
+    <p class="lr-take" data-draw="fact" data-source="facts" data-field="value" data-where="key=takeaway">—</p>
+  </header>
+
+  <nav class="lr-tabs" role="tablist" aria-label="리포트 구성">
+    <button class="lr-tab" role="tab" id="tab-overview" data-page="overview" aria-selected="true">요약·추천</button>
+    <button class="lr-tab" role="tab" id="tab-market" data-page="market" aria-selected="false">시장 온도계</button>
+    <button class="lr-tab" role="tab" id="tab-macro" data-page="macro" aria-selected="false">거시·환율</button>
+    <button class="lr-tab" role="tab" id="tab-blog" data-page="blog" aria-selected="false">메르 블로그 검토</button>
+    <button class="lr-tab" role="tab" id="tab-sectors" data-page="sectors" aria-selected="false">10년 업종 점수</button>
+    <button class="lr-tab" role="tab" id="tab-records" data-page="records" aria-selected="false">기록</button>
+  </nav>
+
+  <!-- 요약·추천 -->
+  <section class="lr-page" id="overview" data-page="overview">
+    <div class="lr-grid">
+      <div class="lr-card" id="kr-card">
+        <span class="lr-label">한국 시장 온도</span>
+        <div class="lr-row">
+          <span class="lr-big" data-draw="fact" data-source="facts" data-field="value" data-where="key=kr_verdict">—</span>
+          <span class="lr-muted lr-num">평균 점수 <b data-draw="thermo-avg" data-source="thermo_avg" data-field="avg" data-where="market=%ED%95%9C%EA%B5%AD">—</b></span>
+        </div>
+        <p class="lr-text">매수 방식: <b data-draw="fact" data-source="facts" data-field="value" data-where="key=kr_method">—</b></p>
+        <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=kr_note">—</p>
+      </div>
+      <div class="lr-card" id="us-card">
+        <span class="lr-label">미국 시장 온도</span>
+        <div class="lr-row">
+          <span class="lr-big" data-draw="fact" data-source="facts" data-field="value" data-where="key=us_verdict">—</span>
+          <span class="lr-muted lr-num">평균 점수 <b data-draw="thermo-avg" data-source="thermo_avg" data-field="avg" data-where="market=%EB%AF%B8%EA%B5%AD">—</b></span>
+        </div>
+        <p class="lr-text">매수 방식: <b data-draw="fact" data-source="facts" data-field="value" data-where="key=us_method">—</b></p>
+        <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=us_note">—</p>
+      </div>
+    </div>
+
+    <h2 class="lr-section-title" id="picks">이번 추천 3종목</h2>
+    <p class="lr-note">점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
+    <div class="lr-grid" data-draw="picks" data-source="picks reviews">—</div>
+
+    <div class="lr-card" id="sell-review">
+      <h2>🚨 매도 검토 (성장동력 점검)</h2>
+      <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=sell_note">—</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="reviews" data-row-key="key">
+          <thead><tr><th data-field="at">점검 시점</th><th data-field="name">종목</th><th class="r" data-field="price">현재가</th><th class="r" data-field="ret_pct">추천 후 수익률</th><th data-field="status">판정</th><th data-field="reason">근거</th></tr></thead>
+          <tbody data-draw="reviews-body" data-source="reviews"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="lr-card" id="watchouts">
+      <h2>보유 중이라면 점검할 곳</h2>
+      <p class="lr-note">10년 성장동력이 약해졌거나 구조적 역풍이 확인된 영역입니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="watchouts" data-row-key="area">
+          <thead><tr><th data-field="area">영역</th><th data-field="status">판단</th><th data-field="reason">근거</th></tr></thead>
+          <tbody data-draw="watch-body" data-source="watchouts"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 시장 온도계 -->
+  <section class="lr-page" id="market" data-page="market" hidden>
+    <div class="lr-card" id="hist-card">
+      <h2>최근 1년 흐름</h2>
+      <p class="lr-note">1년 전 주간 종가를 100으로 맞춘 지수입니다. 원/달러는 오르면 원화 약세입니다.</p>
+      <div class="lr-chart" data-draw="hist" data-source="history_idx"></div>
+    </div>
+    <div class="lr-card" id="market-table">
+      <h2>주요 지표</h2>
+      <p class="lr-note">직전 거래일 종가 기준입니다. 5년 내 위치는 지난 5년 종가 중 지금보다 낮았던 날의 비율입니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="market" data-row-key="symbol">
+          <thead><tr><th data-field="kind">구분</th><th data-field="name">지표</th><th class="r" data-field="last">현재</th><th class="r" data-field="chg_1w">1주</th><th class="r" data-field="chg_1m">1개월</th><th class="r" data-field="chg_1y">1년</th><th class="r" data-field="from_high">52주 고점 대비</th><th class="r" data-field="pctile_5y">5년 내 위치</th><th data-field="asof">기준일</th></tr></thead>
+          <tbody data-draw="market-body" data-source="market"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="lr-card" id="thermo-table">
+      <h2>온도계 점수</h2>
+      <p class="lr-note">지표마다 -2(매우 비쌈)~+2(매우 쌈)점을 매겨 평균을 냅니다. 평균 +1.2 이상은 매우 저평가, +0.4 이상은 저평가, -0.4~+0.4는 적정, -1.2 이하는 과열입니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="thermometer" data-row-key="id">
+          <thead><tr><th data-field="market">시장</th><th data-field="metric">지표</th><th data-field="value">현재 값</th><th class="r" data-field="score">점수</th><th data-field="basis">근거</th></tr></thead>
+          <tbody data-draw="thermo-body" data-source="thermometer"></tbody>
+        </table>
+      </div>
+      <p class="lr-note">국민연금이 본격 매수에 나설 수 있는 코스피 참고선: <b data-draw="fact" data-source="facts" data-field="value" data-where="key=nps_line">—</b></p>
+    </div>
+  </section>
+
+  <!-- 거시·환율 -->
+  <section class="lr-page" id="macro" data-page="macro" hidden>
+    <div class="lr-card" id="growth">
+      <h2>성장률 전망 (IMF 2026년 10월)</h2>
+      <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=macro_growth_note">—</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="macro" data-row-key="region">
+          <thead><tr><th data-field="region">지역</th><th class="r" data-field="g2026">2026년</th><th class="r" data-field="rev">7월 대비</th><th class="r" data-field="g2027">2027년</th><th data-field="note">메모</th></tr></thead>
+          <tbody data-draw="macro-body" data-source="macro"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="lr-grid">
+      <div class="lr-card" id="rates"><h3>금리</h3><p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=macro_rate_note">—</p></div>
+      <div class="lr-card" id="fx"><h3>환율 (원화 투자자 관점)</h3><p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=macro_fx_note">—</p></div>
+      <div class="lr-card" id="geo"><h3>지정학·정책</h3><p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=macro_geo_note">—</p></div>
+    </div>
+    <div class="lr-grid">
+      <div class="lr-card" id="priced-yes"><h3>이미 가격에 반영된 것</h3><ul class="lr-list" data-draw="priced" data-side="반영됨" data-source="pricedin"></ul></div>
+      <div class="lr-card" id="priced-no"><h3>아직 반영되지 않은 것</h3><ul class="lr-list" data-draw="priced" data-side="미반영" data-source="pricedin"></ul></div>
+    </div>
+    <div class="lr-card" id="events">
+      <h2>다가오는 확인 일정</h2>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="events" data-row-key="date">
+          <thead><tr><th data-field="date">날짜</th><th data-field="event">일정</th><th data-field="why">왜 중요한가</th></tr></thead>
+          <tbody data-draw="events-body" data-source="events"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 블로그 -->
+  <section class="lr-page" id="blog" data-page="blog" hidden>
+    <div class="lr-card" id="blog-summary">
+      <h2>메르의 블로그(ranto28) 전체 검토</h2>
+      <p class="lr-text">첫 글부터 공개 글 <b data-draw="fact" data-fmt="int" data-source="facts" data-field="value" data-where="key=blog_posts">—</b>개를 모두 검토했고, 그중 경제 관련 글 <b data-draw="fact" data-fmt="int" data-source="facts" data-field="value" data-where="key=blog_econ">—</b>개를 글마다 판정했습니다. <span data-draw="fact" data-source="facts" data-field="value" data-where="key=blog_new">—</span>.</p>
+      <dl class="lr-dl">
+        <dt>잘 맞힌 것</dt><dd data-draw="fact" data-source="facts" data-field="value" data-where="key=blog_strength">—</dd>
+        <dt>자주 틀린 것</dt><dd data-draw="fact" data-source="facts" data-field="value" data-where="key=blog_weakness">—</dd>
+        <dt>이 리포트의 활용 원칙</dt><dd data-draw="fact" data-source="facts" data-field="value" data-where="key=blog_policy">—</dd>
+      </dl>
+      <p class="lr-note">원문은 싣지 않고 요약과 링크만 남깁니다. 시기별 정리는 <a href="https://github.com/alephnull-hub/stock/blob/main/data/blog_themes.md">blog_themes.md</a>, 글별 판정은 <a href="https://github.com/alephnull-hub/stock/blob/main/data/blog_insights.csv">blog_insights.csv</a>에 있습니다.</p>
+    </div>
+    <div class="lr-card" id="blog-recent">
+      <h2>최근 30일 주요 글 판정</h2>
+      <p class="lr-note">사실 정리형(참고) 글은 뺐습니다. 반영은 근거를 확인해 리포트 판단에 썼다는 뜻, 반론은 데이터나 논리로 반박했다는 뜻입니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="blog_recent" data-row-key="logNo">
+          <thead><tr><th data-field="date">날짜</th><th data-field="title">글</th><th data-field="verdict">판정</th><th data-field="rationale">근거·반론</th></tr></thead>
+          <tbody data-draw="blog-recent-body" data-source="blog_recent"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="lr-card" id="blog-periods">
+      <h2>반기별 판정과 적중률</h2>
+      <p class="lr-note">적중률은 전망이 들어간 글 중 적중으로 판정한 비율입니다. 해설형 글이 많아 후하게 잡혔을 수 있습니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="blog_periods" data-row-key="period">
+          <thead><tr><th data-field="period">기간</th><th class="r" data-field="posts">경제 글</th><th class="r" data-field="accept">반영</th><th class="r" data-field="partial">일부반영</th><th class="r" data-field="counter">반론</th><th class="r" data-field="miss">빗나감</th><th class="r" data-source="blog_hit" data-field="hit_rate">적중률</th></tr></thead>
+          <tbody data-draw="blog-periods-body" data-source="blog_periods blog_hit"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 업종 -->
+  <section class="lr-page" id="sectors" data-page="sectors" hidden>
+    <div class="lr-card" id="sector-table">
+      <h2>10년 성장 업종 점수표</h2>
+      <p class="lr-note">기술 방향성, 국제 정세·정책, 구조적 수요, 진입장벽, 현재 가격을 각 1~5점으로 매겨 합산합니다. 가격 점수는 비쌀수록 낮습니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="sectors" data-row-key="sector">
+          <thead><tr><th data-field="sector">업종</th><th class="r" data-field="tech">기술</th><th class="r" data-field="policy">정세·정책</th><th class="r" data-field="demand">구조적 수요</th><th class="r" data-field="moat">진입장벽</th><th class="r" data-field="price">가격</th><th class="r" data-source="sector_total" data-field="total">합계</th><th data-field="note">한 줄 평</th></tr></thead>
+          <tbody data-draw="sectors-body" data-source="sectors sector_total"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기록 -->
+  <section class="lr-page" id="records" data-page="records" hidden>
+    <div class="lr-card" id="report-list">
+      <h2>리포트 목록</h2>
+      <p class="lr-note">매주 일요일 오전 자동으로 작성되고, 요청할 때마다 수시 리포트가 추가됩니다. 원문은 GitHub에 있습니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="reports" data-row-key="date">
+          <thead><tr><th data-field="date">날짜</th><th data-field="kind">종류</th><th data-field="temp">시장 온도(한국/미국)</th><th data-field="picks">추천</th><th data-field="sell">매도 검토</th></tr></thead>
+          <tbody data-draw="reports-body" data-source="reports"></tbody>
+        </table>
+      </div>
+      <p class="lr-note">판단 기준: <a href="https://github.com/alephnull-hub/stock/blob/main/METHODOLOGY.md">METHODOLOGY.md</a> · 전체 저장소: <a href="https://github.com/alephnull-hub/stock">alephnull-hub/stock</a></p>
+    </div>
+  </section>
+
+  <p class="lr-foot">공개 정보에 기반한 개인 참고용 분석이며 투자 권유가 아닙니다. 수치는 지연되거나 틀릴 수 있고, 투자 판단과 책임은 본인에게 있습니다. 각 숫자를 누르면 출처와 기준 시점을 볼 수 있습니다.</p>
+</div>
+
+<script>
+  // 공용 서식과 행 조회
+  window.LR = {
+    rows: (id) => { const d = dash.data(id); return d.status === 'ok' && Array.isArray(d.data) ? d.data : null; },
+    num: (v, nd = 0) => (v == null || v === '' || isNaN(Number(v))) ? '-' : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: nd, maximumFractionDigits: nd }),
+    signed: (v, nd = 1, unit = '%') => (v == null || isNaN(Number(v))) ? '-' : (Number(v) > 0 ? '+' : '') + Number(v).toFixed(nd) + unit,
+    cls: (v) => (v == null ? '' : Number(v) > 0 ? 'lr-ok' : Number(v) < 0 ? 'lr-bad' : ''),
+    td: (tr, text, cls) => { const c = tr.insertCell(); c.textContent = text; if (cls) c.className = cls; return c; },
+    whereKey: (el) => decodeURIComponent((el.dataset.where || '').split('=').slice(1).join('=')),
+  };
+</script>
+
+<script>
+  // 계산: 시장별 온도계 평균, 업종 합계, 반기별 적중률, 1년 흐름 지수화
+  dash.calc('thermo_avg', {
+    title: '시장별 온도계 평균 점수', description: '온도계 지표 점수를 시장별로 평균한 값입니다.', inputs: ['thermometer'],
+    fn: (thermometer) => Array.from(d3.group(thermometer, (r) => r.market), ([market, rs]) => ({ market, avg: Math.round(d3.mean(rs, (r) => Number(r.score)) * 100) / 100 })),
+  });
+  dash.calc('sector_total', {
+    title: '업종 점수 합계', description: '다섯 항목 점수(1~5점)를 더한 25점 만점 합계입니다.', inputs: ['sectors'],
+    fn: (sectors) => sectors.map((r) => ({ sector: r.sector, total: Number(r.tech) + Number(r.policy) + Number(r.demand) + Number(r.moat) + Number(r.price) })),
+  });
+  dash.calc('blog_hit', {
+    title: '반기별 블로그 적중률', description: '적중 ÷ (적중 + 부분적중 + 빗나감)입니다.', inputs: ['blog_periods'],
+    fn: (blog_periods) => blog_periods.map((r) => { const n = Number(r.hit) + Number(r.partial_hit) + Number(r.miss); return { period: r.period, hit_rate: n ? Math.round(Number(r.hit) / n * 1000) / 1000 : null }; }),
+  });
+  dash.calc('history_idx', {
+    title: '1년 흐름 지수(첫 주 = 100)', description: '지표마다 1년 전 첫 주간 종가를 100으로 맞춘 값입니다.', inputs: ['history'],
+    fn: (history) => Array.from(d3.group(history, (r) => r.series), ([series, rs]) => {
+      const sorted = rs.slice().sort((a, b) => a.date < b.date ? -1 : 1); const base = Number(sorted[0].close);
+      return sorted.map((r) => ({ series, date: r.date, close: Number(r.close), idx: Math.round(Number(r.close) / base * 1000) / 10 }));
+    }).flat(),
+  });
+</script>
+
+<script>
+  // 탭: 한 번에 한 페이지만 보인다
+  const pages = () => document.querySelectorAll('section.lr-page');
+  const tabs = () => document.querySelectorAll('.lr-tab');
+  const show = (name) => {
+    let found = false;
+    pages().forEach((p) => { const on = p.dataset.page === name; p.hidden = !on; found = found || on; });
+    if (!found) return false;
+    tabs().forEach((t) => t.setAttribute('aria-selected', String(t.dataset.page === name)));
+    return true;
+  };
+  tabs().forEach((t) => t.addEventListener('click', () => { if (show(t.dataset.page)) dash.setLink(t.dataset.page); }));
+  const start = location.hash.slice(1);
+  if (start) show(start);
+</script>
+
+<script>
+  // 한 값짜리 표시: facts / thermo_avg
+  dash.draw('fact', (el) => {
+    const rows = LR.rows('facts');
+    const r = rows && rows.find((x) => x.key === LR.whereKey(el));
+    if (!r) { el.textContent = '—'; return; }
+    el.textContent = typeof r.value === 'number' ? LR.num(r.value) : String(r.value);
+  });
+  dash.draw('thermo-avg', (el) => {
+    const rows = LR.rows('thermo_avg');
+    const r = rows && rows.find((x) => x.market === LR.whereKey(el));
+    el.textContent = r ? LR.signed(r.avg, 1, '') : '—';
+    el.className = r ? LR.cls(r.avg) : '';
+  });
+</script>
+
+<script>
+  // 추천 3종목 카드
+  dash.draw('picks', (el) => {
+    const picks = LR.rows('picks');
+    const reviews = LR.rows('reviews') || [];
+    el.replaceChildren();
+    if (!picks) { el.textContent = '—'; return; }
+    const unitText = (u) => u === 'KRW' ? '원' : u === 'KRW/g' ? '원/g' : u;
+    const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+    const mark = (n, field, ticker) => { n.dataset.source = 'picks'; n.dataset.field = field; n.dataset.where = 'ticker=' + encodeURIComponent(ticker); return n; };
+    picks.forEach((p) => {
+      const card = mk('article', 'lr-card lr-pick'); card.id = 'pick-' + p.rank;
+      const head = mk('div', 'lr-pick-head');
+      const t = mk('div');
+      t.append(mark(mk('h3', null, p.name), 'name', p.ticker));
+      t.append(mk('span', 'lr-label', p.sector + ' · ' + p.kind + ' · ' + p.ticker));
+      const latest = reviews.filter((r) => r.ticker === p.ticker).sort((a, b) => a.at < b.at ? 1 : -1)[0];
+      const st = latest ? latest.status : '신규';
+      const pill = mk('span', 'lr-pill ' + (st === '매도' ? 'lr-bad' : st === '비중 축소' || st === '관찰' ? 'lr-warn' : 'lr-ok'), st);
+      head.append(t, pill);
+      const price = mk('div', 'lr-row');
+      price.append(mark(mk('span', 'lr-big lr-num', LR.num(p.now_price)), 'now_price', p.ticker), mk('span', 'lr-muted', unitText(p.unit)));
+      price.append(mk('span', 'lr-muted', '추천 후'), mark(mk('span', 'lr-num ' + LR.cls(p.ret_pct), LR.signed(p.ret_pct)), 'ret_pct', p.ticker));
+      const zones = mk('div', 'lr-zones');
+      [['1차', 'buy1'], ['2차', 'buy2'], ['3차', 'buy3']].forEach(([lab, f], i, arr) => {
+        const lower = i < arr.length - 1 ? p[arr[i + 1][1]] : -Infinity;
+        const z = mk('div', 'lr-zone' + (p.now_price <= p[f] && p.now_price > lower ? ' on' : ''));
+        const v = mk('span', 'lr-num'); v.append(mark(mk('b', null, LR.num(p[f])), f, p.ticker), document.createTextNode(' 이하'));
+        z.append(mk('span', 'lr-label', lab + ' 매수 구간'), v);
+        zones.append(z);
+      });
+      const kv = mk('div', 'lr-kv');
+      [['PER', 'per'], ['예상 PER', 'fwd_per'], ['PBR', 'pbr'], ['PCR', 'pcr'], ['PSR', 'psr']].forEach(([lab, f]) => {
+        if (p[f] == null) return;
+        const d = mk('div'); d.append(mk('span', 'lr-label', lab), mark(mk('span', 'lr-num', LR.num(p[f], 1)), f, p.ticker)); kv.append(d);
+      });
+      const dl = mk('dl', 'lr-dl');
+      [['지금 할 일', 'action'], ['10년 투자 논리', 'thesis'], ['위험 요인', 'risk'], ['이게 깨지면 판다', 'sell_trigger']].forEach(([lab, f]) => {
+        dl.append(mk('dt', null, lab), mark(mk('dd', null, p[f]), f, p.ticker));
+      });
+      card.append(head, price, zones);
+      if (kv.childElementCount) card.append(kv);
+      card.append(dl);
+      el.append(card);
+    });
+  });
+</script>
+
+<script>
+  // 표 본문들
+  const body = (name, id, key, fill, sort) => dash.draw(name, (tb) => {
+    tb.replaceChildren();
+    let rows = LR.rows(id);
+    if (!rows) return;
+    if (sort) rows = sort(rows.slice());
+    rows.forEach((r) => { const tr = tb.insertRow(); tr.dataset.key = r[key]; fill(tr, r); });
+  });
+
+  body('reviews-body', 'reviews', 'key', (tr, r) => {
+    LR.td(tr, r.at); LR.td(tr, r.name); LR.td(tr, LR.num(r.price), 'r'); LR.td(tr, LR.signed(r.ret_pct), 'r ' + LR.cls(r.ret_pct));
+    const c = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.status === '매도' ? 'lr-bad' : r.status === '유지' ? 'lr-ok' : 'lr-warn'); s.textContent = r.status; c.append(s);
+    LR.td(tr, r.reason, 'lr-wrap');
+  }, (rs) => rs.sort((a, b) => a.at < b.at ? 1 : -1));
+
+  body('watch-body', 'watchouts', 'area', (tr, r) => {
+    LR.td(tr, r.area, 'lr-wrap');
+    const c = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.level === 'bad' ? 'lr-bad' : 'lr-warn'); s.textContent = r.status; c.append(s);
+    LR.td(tr, r.reason, 'lr-wrap');
+  });
+
+  body('market-body', 'market', 'symbol', (tr, r) => {
+    LR.td(tr, r.kind, 'lr-muted'); LR.td(tr, r.name); LR.td(tr, LR.num(r.last, 2), 'r');
+    ['chg_1w', 'chg_1m', 'chg_1y', 'from_high'].forEach((f) => LR.td(tr, LR.signed(r[f]), 'r ' + LR.cls(r[f])));
+    LR.td(tr, LR.num(r.pctile_5y) + '%', 'r'); LR.td(tr, r.asof, 'lr-muted');
+  });
+
+  body('thermo-body', 'thermometer', 'id', (tr, r) => {
+    LR.td(tr, r.market); LR.td(tr, r.metric); LR.td(tr, r.value); LR.td(tr, LR.signed(r.score, 0, ''), 'r ' + LR.cls(r.score)); LR.td(tr, r.basis, 'lr-wrap lr-muted');
+  });
+
+  body('macro-body', 'macro', 'region', (tr, r) => {
+    LR.td(tr, r.region); LR.td(tr, LR.num(r.g2026, 1) + '%', 'r'); LR.td(tr, LR.signed(r.rev, 1, '%p'), 'r ' + LR.cls(r.rev));
+    LR.td(tr, r.g2027 == null ? '-' : LR.num(r.g2027, 1) + '%', 'r'); LR.td(tr, r.note, 'lr-wrap lr-muted');
+  });
+
+  body('events-body', 'events', 'date', (tr, r) => { LR.td(tr, r.date); LR.td(tr, r.event, 'lr-wrap'); LR.td(tr, r.why, 'lr-wrap lr-muted'); });
+
+  body('blog-recent-body', 'blog_recent', 'logNo', (tr, r) => {
+    LR.td(tr, r.date);
+    const c = tr.insertCell(); c.className = 'lr-wrap'; const a = document.createElement('a'); a.href = r.url; a.textContent = r.title; c.append(a);
+    const v = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.verdict === '반영' ? 'lr-ok' : r.verdict === '반론' ? 'lr-bad' : 'lr-warn'); s.textContent = r.verdict; v.append(s);
+    LR.td(tr, r.rationale, 'lr-wrap lr-muted');
+  });
+
+  body('blog-periods-body', 'blog_periods', 'period', (tr, r) => {
+    const hit = (LR.rows('blog_hit') || []).find((h) => h.period === r.period);
+    LR.td(tr, r.period); ['posts', 'accept', 'partial', 'counter', 'miss'].forEach((f) => LR.td(tr, LR.num(r[f]), 'r'));
+    LR.td(tr, hit && hit.hit_rate != null ? d3.format('.0%')(hit.hit_rate) : '-', 'r');
+  });
+
+  body('sectors-body', 'sectors', 'sector', (tr, r) => {
+    const tot = (LR.rows('sector_total') || []).find((t) => t.sector === r.sector);
+    LR.td(tr, r.sector); ['tech', 'policy', 'demand', 'moat', 'price'].forEach((f) => LR.td(tr, LR.num(r[f]), 'r'));
+    const c = tr.insertCell(); c.className = 'r';
+    const wrap = document.createElement('span'); wrap.className = 'lr-bar';
+    const n = document.createElement('b'); n.textContent = tot ? LR.num(tot.total) : '-';
+    const track = document.createElement('span'); track.className = 'track';
+    const fill = document.createElement('span'); fill.className = 'fill' + (tot && tot.total >= 22 ? ' top' : ''); fill.style.width = tot ? (tot.total / 25 * 100) + '%' : '0';
+    track.append(fill); wrap.append(n, track); c.append(wrap);
+    LR.td(tr, r.note, 'lr-wrap lr-muted');
+  }, (rs) => { const t = LR.rows('sector_total') || []; const tot = (s) => (t.find((x) => x.sector === s) || {}).total || 0; return rs.sort((a, b) => tot(b.sector) - tot(a.sector)); });
+
+  body('reports-body', 'reports', 'date', (tr, r) => {
+    const c = tr.insertCell(); const a = document.createElement('a'); a.href = r.url; a.textContent = r.date; c.append(a);
+    LR.td(tr, r.kind); LR.td(tr, r.temp); LR.td(tr, r.picks, 'lr-wrap'); LR.td(tr, r.sell, 'lr-wrap');
+  });
+
+  dash.draw('priced', (ul) => {
+    ul.replaceChildren();
+    const rows = LR.rows('pricedin');
+    if (!rows) return;
+    rows.forEach((r, i) => { if (r.side !== ul.dataset.side) return; const li = document.createElement('li'); li.textContent = r.item; li.dataset.source = 'pricedin'; li.dataset.field = 'item'; li.dataset.row = String(i); ul.append(li); });
+  });
+</script>
+
+<script>
+  // 1년 흐름 차트
+  dash.draw('hist', (el) => {
+    el.replaceChildren();
+    const rows = LR.rows('history_idx');
+    if (!rows || !rows.length) return;
+    const W = Math.max(280, el.clientWidth), H = 288;
+    const series = Array.from(d3.group(rows, (r) => r.series), ([name, rs]) => ({ name, rs: rs.map((r) => ({ ...r, d: new Date(r.date) })) }));
+    const color = (i) => dash.colors[i % dash.colors.length];
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '최근 1년 지표 흐름');
+    // 끝 라벨 폭 측정
+    const probe = svg.append('text').attr('font-size', 12).style('font-family', 'var(--font-anthropic-sans)');
+    const endLabels = series.map((s) => s.name + ' ' + LR.num(s.rs[s.rs.length - 1].idx, 0));
+    const labW = d3.max(endLabels, (t) => { probe.text(t); return probe.node().getComputedTextLength(); }) || 60;
+    probe.remove();
+    const m = { t: 12, r: labW + 14, b: 26, l: 36 };
+    const x = d3.scaleUtc(d3.extent(rows, (r) => new Date(r.date)), [m.l, W - m.r]);
+    const y = d3.scaleLinear([d3.min(rows, (r) => r.idx) * 0.95, d3.max(rows, (r) => r.idx) * 1.03], [H - m.b, m.t]).nice();
+    const gy = svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)));
+    gy.attr('font-size', null).attr('font-family', null);
+    gy.select('.domain').remove();
+    gy.selectAll('line').attr('stroke', 'var(--cds-chart-grid)');
+    gy.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)');
+    const gx = svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - m.l - m.r) / 90))).tickFormat(d3.utcFormat('%y.%m')));
+    gx.attr('font-size', null).attr('font-family', null);
+    gx.select('.domain').attr('stroke', 'var(--cds-chart-axis)');
+    gx.selectAll('line').attr('stroke', 'var(--cds-chart-axis)');
+    gx.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)');
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(100)).attr('y2', y(100)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3');
+    const line = d3.line().x((r) => x(r.d)).y((r) => y(r.idx));
+    series.forEach((s, i) => {
+      svg.append('path').attr('d', line(s.rs)).attr('fill', 'none').attr('stroke', color(i)).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    });
+    // 끝 라벨: 겹치지 않게 아래로 밀기
+    const ends = series.map((s, i) => ({ i, text: endLabels[i], y: y(s.rs[s.rs.length - 1].idx) })).sort((a, b) => a.y - b.y);
+    ends.forEach((e, k) => { if (k > 0 && e.y - ends[k - 1].y < 14) e.y = ends[k - 1].y + 14; });
+    ends.forEach((e) => svg.append('text').attr('x', W - m.r + 6).attr('y', e.y).attr('dy', '0.32em').attr('fill', color(e.i)).style('font-size', '12px').style('font-family', 'var(--font-anthropic-sans)').text(e.text));
+    // 툴팁
+    const tip = document.createElement('div'); tip.className = 'lr-tip'; tip.hidden = true; el.append(tip);
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', 'var(--cds-chart-axis)').attr('visibility', 'hidden');
+    const dates = Array.from(new Set(rows.map((r) => r.date))).sort().map((d) => new Date(d));
+    svg.on('pointermove', (ev) => {
+      const [px] = d3.pointer(ev);
+      const d = dates[Math.max(0, Math.min(dates.length - 1, d3.bisectCenter(dates.map(Number), +x.invert(px))))];
+      rule.attr('x1', x(d)).attr('x2', x(d)).attr('visibility', 'visible');
+      tip.replaceChildren();
+      const head = document.createElement('div'); head.className = 'd'; head.textContent = d3.utcFormat('%Y-%m-%d')(d); tip.append(head);
+      series.forEach((s, i) => {
+        const r = s.rs.find((q) => +q.d === +d); if (!r) return;
+        const ln = document.createElement('div'); const sw = document.createElement('i'); sw.style.background = color(i);
+        ln.append(sw, document.createTextNode(`${s.name} ${LR.num(r.idx, 1)} (종가 ${LR.num(r.close, 2)})`)); tip.append(ln);
+      });
+      tip.hidden = false;
+      const bw = el.clientWidth, tw = tip.offsetWidth;
+      const left = Math.min(Math.max(0, x(d) / W * bw + 12), bw - tw);
+      tip.style.left = left + 'px'; tip.style.top = '8px';
+    });
+    svg.on('pointerleave', () => { tip.hidden = true; rule.attr('visibility', 'hidden'); });
+  });
+</script>

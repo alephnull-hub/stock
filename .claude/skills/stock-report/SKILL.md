@@ -54,3 +54,12 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
    push 실패 시 `git pull --rebase origin main` 후 재시도(네트워크 오류는 2·4·8·16초 간격 최대 4회).
 3. 사용자에게 요약(시장 판정 한 줄, 매도 검토 종목, 3종목과 매수 구간)과 리포트 링크
    `https://github.com/alephnull-hub/stock/blob/main/<리포트 경로>` 를 알린다.
+
+## 6. 웹 대시보드 갱신 (리포트를 쓸 때마다)
+대시보드: https://claude.ai/artifact/U2fNy5KyG9QKSqPnfaPX5v (Dashboard 유형, 페이지 원본 사본은 `dashboard/index.html`)
+1. `data/dashboard_inputs.json` 을 이번 리포트 내용으로 고친다(facts의 판정·요약 문장·report_date/report_path, thermometer 점수, macro, pricedin, events, watchouts, sectors, picks_detail의 밸류에이션과 '지금 할 일'). 새 추천이 생기면 picks_detail에 티커를 추가한다.
+2. `python3 scripts/market_snapshot.py` 를 먼저 돌린 뒤 `python3 scripts/build_dashboard.py <스크래치폴더>/dash` 로 JSON 14개를 만든다.
+3. 각 JSON을 Artifact 도구 `action: publish`, `url`: 위 주소, `asset: true`, `file_path` 로 하나씩 올린다(결과의 `/_blob/<id>` 를 기록).
+4. ArtifactData 로 `datasets/<id>` 를 읽어 version을 확인하고, `update` 로 `source.url`·`source.name`·`updated: {at: ISO 시각, by: "Claude (리포트 이름)"}` 만 바꾼다(batch, 각 항목에 if_version).
+5. 페이지 구조를 바꿀 때만 `files/index.html` 을 고친다(먼저 읽고, `dashboard/index.html` 사본도 같이 갱신). 그 뒤 `data/users/me` 의 `check` 문서를 읽어 실패가 없는지 확인한다.
+6. 쓰지 않게 된 이전 파일은 Artifact `action: delete`, `path`: 자산 id 로 지운다.
