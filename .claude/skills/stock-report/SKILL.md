@@ -20,6 +20,8 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
 1. 시장 지표 + 지난 추천 종목 + 이번 주 후보 종목:
    `python3 scripts/market_snapshot.py --save <지난 추천 티커들> <후보 티커들>`
    (국내 종목은 `005930.KS` 형식, 코스닥은 `.KQ`)
+   - Yahoo의 비율(PER·PBR·PCR)은 며칠 전 가격 기준일 수 있다. 장중 급등락이 있으면 네이버 EPS·BPS(`https://m.stock.naver.com/api/stock/<코드>/integration`)로 현재가 기준으로 다시 계산한다.
+   - 추천 이력의 `KRX-GOLD`(금현물)는 `GC=F × KRW=X ÷ 31.1035` 로 원/g 이론가를 계산해 추적한다.
 2. 웹 검색(기본 standard 모드)으로 보강:
    - 코스피·코스닥 12개월 예상 PER/PBR, S&P500 예상 PER(FactSet Earnings Insight 최신호), CAPE(multpl), 버핏지수
    - IMF/OECD 성장률 전망과 조정, 미국·한국 기준금리 예상 경로, 환율 이슈, 지정학 이슈
