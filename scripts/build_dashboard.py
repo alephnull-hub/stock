@@ -81,7 +81,7 @@ def main():
     latest = {}
     for r in recs:
         latest[r["ticker"]] = r
-    active = [r for t, r in latest.items() if last_status.get(t) != "매도"]
+    active = [r for t, r in latest.items() if last_status.get(t) not in ("매도", "교체")]
     active = sorted(active, key=lambda r: (r["date"], -int(r["rank"])), reverse=True)[:5]
     gold_g = mk["GC=F"]["last"] * mk["KRW=X"]["last"] / 31.1035
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -143,6 +143,29 @@ def main():
                    "pcr": r.get("pcr") and round(r["pcr"], 1), "psr": r.get("psr") and round(r["psr"], 1),
                    "zone": ("1차 구간 안" if price and price <= c["buy1"] else "1차 구간 위") if price else "-"})
     ds["us_candidates"] = us
+
+    # 세부 업종 내 성장성 비교(METHODOLOGY 4-6): growth_compare.py --json 결과 + 지속성 필터 메모
+    gpath = os.path.join(ROOT, "data", "growth_compare_raw.json")
+    picked = {p["ticker"] for p in ds["picks"]}
+    growth = []
+    if os.path.exists(gpath):
+        filt = inp.get("growth_filters", {})
+        for group, rows in json.load(open(gpath)).items():
+            g = []
+            for r in rows:
+                two = lambda a, b: (1 + a) * (1 + b) - 1 if a is not None and b is not None else None
+                g.append({"key": f"{group}|{r['symbol']}", "group": group, "ticker": r["symbol"], "name": r["name"],
+                          "rev2y": two(r["rev_g_cy"], r["rev_g_ny"]), "eps2y": two(r["eps_g_cy"], r["eps_g_ny"]),
+                          "roe": r["roe"], "peg": r["peg"], "fwd_pe": r["fwd_pe"], "filter": filt.get(r["symbol"], ""),
+                          "picked": "추천" if r["symbol"] in picked else ""})
+            for f in ("rev2y", "eps2y", "roe"):
+                order = sorted([x for x in g if x[f] is not None], key=lambda x: -x[f])
+                for i, x in enumerate(order):
+                    x["rank_" + f] = i + 1
+            for x in g:
+                x["rank_sum"] = sum(x.get("rank_" + f, len(g)) for f in ("rev2y", "eps2y", "roe"))
+            growth += sorted(g, key=lambda x: (x["rank_sum"], x["peg"] if x["peg"] is not None else 99))
+    ds["growth"] = growth
 
     # 리포트 목록: README 표에서 읽는다
     reps = []

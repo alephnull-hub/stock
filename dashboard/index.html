@@ -235,6 +235,17 @@
 
   <!-- 업종 -->
   <section class="lr-page" id="sectors" data-page="sectors" hidden>
+    <div class="lr-card" id="growth-table">
+      <h2>같은 세부 업종 안의 성장성 비교</h2>
+      <p class="lr-note">같은 세부 업종에 후보가 여럿이면 2년 누적 매출 성장, 2년 누적 EPS 성장, ROE의 순위를 더해 가장 낮은(좋은) 종목을 추천합니다. 동점이면 PEG가 낮은 쪽을 고르고, 빚에 의존한 성장은 제외합니다. 성장률은 애널리스트 컨센서스입니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="growth" data-row-key="key">
+          <thead><tr><th data-field="group">세부 업종</th><th data-field="name">종목</th><th class="r" data-field="rev2y">2년 매출 성장</th><th class="r" data-field="eps2y">2년 EPS 성장</th><th class="r" data-field="roe">ROE</th><th class="r" data-field="peg">PEG</th><th class="r" data-field="rank_sum">순위 합</th><th data-field="picked">추천</th><th data-field="filter">지속성 점검</th></tr></thead>
+          <tbody data-draw="growth-body" data-source="growth"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="lr-card" id="sector-table">
       <h2>10년 성장 업종 점수표</h2>
       <p class="lr-note">기술 방향성, 국제 정세·정책, 구조적 수요, 진입장벽, 현재 가격을 각 1~5점으로 매겨 합산합니다. 가격 점수는 비쌀수록 낮습니다.</p>
@@ -458,6 +469,15 @@
     const v = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.verdict === '후보' || r.verdict === '편입' ? 'lr-ok' : r.verdict === '제외' ? 'lr-bad' : 'lr-warn'); s.textContent = r.verdict; v.append(s);
     LR.td(tr, r.reason, 'lr-wrap lr-muted');
   }, (rs) => { const o = { '편입': -1, '후보': 0, '대기': 1, '관찰': 2, '제외': 3 }; return rs.sort((a, b) => (o[a.verdict] ?? 9) - (o[b.verdict] ?? 9)); });
+
+  body('growth-body', 'growth', 'key', (tr, r) => {
+    const pc = (v) => v == null ? '-' : d3.format('+.0%')(v);
+    LR.td(tr, r.group, 'lr-muted'); LR.td(tr, r.name + ' (' + r.ticker + ')');
+    LR.td(tr, pc(r.rev2y), 'r'); LR.td(tr, pc(r.eps2y), 'r'); LR.td(tr, r.roe == null ? '-' : d3.format('.0%')(r.roe), 'r');
+    LR.td(tr, r.peg == null ? '-' : LR.num(r.peg, 1), 'r'); LR.td(tr, LR.num(r.rank_sum), 'r');
+    const c = tr.insertCell(); if (r.picked) { const s = document.createElement('span'); s.className = 'lr-pill lr-ok'; s.textContent = r.picked; c.append(s); }
+    LR.td(tr, r.filter, 'lr-wrap lr-muted');
+  });
 
   dash.draw('priced', (ul) => {
     ul.replaceChildren();
