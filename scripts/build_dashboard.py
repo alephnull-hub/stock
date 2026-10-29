@@ -72,14 +72,34 @@ def main():
     ds["watchouts"] = inp["watchouts"]
     ds["sectors"] = inp["sectors"]
 
-    # 추천: 가장 최근 추천일의 3종목 + 현재가·수익률
+    # 추천: 종목별 마지막 추천 행 중 마지막 점검 판정이 '매도'가 아닌 것(최대 5개) + 현재가·수익률
     recs = list(csv.DictReader(open(os.path.join(ROOT, "data", "recommendations.csv"))))
-    last = max(r["date"] for r in recs)
+    revs = list(csv.DictReader(open(os.path.join(ROOT, "data", "position_reviews.csv"))))
+    last_status = {}
+    for v in sorted(revs, key=lambda v: v["date"]):
+        last_status[v["ticker"]] = v["status"]
+    latest = {}
+    for r in recs:
+        latest[r["ticker"]] = r
+    active = [r for t, r in latest.items() if last_status.get(t) != "매도"]
+    active = sorted(active, key=lambda r: (r["date"], -int(r["rank"])), reverse=True)[:5]
     gold_g = mk["GC=F"]["last"] * mk["KRW=X"]["last"] / 31.1035
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import market_snapshot as ms
+
+    def now_price(r, det):
+        t = r["ticker"]
+        if t == "KRX-GOLD":
+            return round(gold_g)
+        if t.endswith((".KS", ".KQ")):
+            return naver_price(det.get("now_symbol", t.split(".")[0]))
+        meta, _ = ms.history(t, "5d")
+        return meta and meta.get("regularMarketPrice")
+
     picks = []
-    for r in [r for r in recs if r["date"] == last]:
+    for r in active:
         det = inp["picks_detail"].get(r["ticker"], {})
-        now = round(gold_g) if r["ticker"] == "KRX-GOLD" else naver_price(det.get("now_symbol", r["ticker"].split(".")[0]))
+        now = now_price(r, det)
         rec = float(r["price"])
         picks.append({"rank": int(r["rank"]), "name": r["name"], "ticker": r["ticker"], "sector": r["sector"], "kind": r["type"],
                       "rec_date": r["date"], "rec_price": rec, "now_price": now, "unit": r["currency"],
@@ -115,8 +135,6 @@ def main():
                          if b["date"] >= cutoff and b["verdict"] != "참고"]
 
     # 미국 후보: 판단은 inputs, 가격·밸류에이션은 market_snapshot 의 수집 함수로 새로 가져온다
-    sys.path.insert(0, os.path.join(ROOT, "scripts"))
-    import market_snapshot as ms
     us = []
     for c in inp.get("us_candidates", []):
         r = ms.stock_row(c["ticker"])
