@@ -1,6 +1,6 @@
 ---
 name: stock-report
-description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사해줘", "리포트 만들어줘", 주간 예약 실행 시 사용. 시장 온도계, 거시·환율, 메르 블로그 검토, 매도 검토, 5종목 추천을 작성해 main 브랜치에 누적한다.
+description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사해줘", "리포트 만들어줘", 주간 예약 실행 시 사용. 시장 온도계, 거시·환율, 메르 블로그 검토, 매도 검토, 10종목 포트폴리오(코어 4 + 위성 6) 추천을 작성해 main 브랜치에 누적한다.
 ---
 
 # 장기투자 리포트 작성 절차
@@ -39,11 +39,11 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
 5. **업종 점수표**: METHODOLOGY 3장. 지난주 대비 점수 변화와 이유
 6. **세부 업종 내 성장성 비교**: 추천·후보 종목이 속한 세부 업종마다 `python3 scripts/growth_compare.py 그룹=티커,… --json 2>data/growth_compare_raw.json` 로 비교하고 METHODOLOGY 4-6에 따라 1위를 고른다. 1위가 바뀌면 교체한다(4-5의 4번).
 6-1. **미국 후보 점검**: 미국 후보 5개 이상을 표로 판정(후보/대기/관찰/제외) → `data/dashboard_inputs.json`의 `us_candidates` 갱신
-7. **이번 주 5종목**: 한국·미국 후보를 합쳐 고른다. 매도 판정이 아닌 기존 추천은 유지하고, 빈자리(매도·비중 축소로 뺀 종목)만 새로 채워 5종목을 맞춘다. 새로 넣은 종목만 `data/recommendations.csv`에 행을 추가한다. 서로 다른 세부 업종이어야 하고, 대분류 테마당 최대 2종목이다(METHODOLOGY 4-5). 빈자리가 없어도 교체 규칙(4-5)을 만족하는 후보가 있으면 비교표를 붙여 교체한다. 원칙적으로 1개 이상은 미국 상장 종목(안 넣으면 이유와 조건을 쓴다). 시장이 고평가 이상이면 방어형 1개 포함. 재추천이면 표시
+7. **포트폴리오 10종목**(METHODOLOGY 4-7): 코어 4(S&P500·코스피200·인도·금, 60%)는 유지하고 시장 온도에 따라 분할 속도만 조정한다. 위성 6(40%)은 한국·미국 후보를 합쳐 고른다. 매도·교체 판정이 아닌 기존 추천은 유지하고 빈자리만 채운다. 비중 상한(개별주 10%, 변동성 50% 초과 7%, 국가별 개별주 25%, AI 사이클 30%)을 점검한다. 구성과 비중은 `data/dashboard_inputs.json`의 `portfolio`에 적는다. 새로 넣은 종목만 `data/recommendations.csv`에 행을 추가한다. 서로 다른 세부 업종이어야 하고, 대분류 테마당 최대 2종목이다(METHODOLOGY 4-5). 빈자리가 없어도 교체 규칙(4-5)을 만족하는 후보가 있으면 비교표를 붙여 교체한다. 원칙적으로 1개 이상은 미국 상장 종목(안 넣으면 이유와 조건을 쓴다). 시장이 고평가 이상이면 방어형 1개 포함. 재추천이면 표시
    → `data/recommendations.csv` 에 3행 추가
 
 ## 4. 리포트 양식 (`reports/TEMPLATE.md` 복사해서 채움)
-섹션 순서: 요약 → 🚨 매도 검토 → 시장 온도계 → 거시·환율 → 블로그 검토 → 업종 점수표 → 미국 후보 점검 → 이번 주 5종목 → 지난 추천 추적 → 출처 → 면책
+섹션 순서: 요약 → 🚨 매도 검토 → 시장 온도계 → 거시·환율 → 블로그 검토 → 업종 점수표 → 미국 후보 점검 → 포트폴리오 10종목(비중 점검 포함) → 지난 추천 추적 → 출처 → 면책
 - 모든 수치에 기준일, 주요 주장에 출처 링크
 - 확인 못 한 수치는 "미확인"으로 적고 추정하지 않는다
 
@@ -55,13 +55,13 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
    git push origin HEAD:main
    ```
    push 실패 시 `git pull --rebase origin main` 후 재시도(네트워크 오류는 2·4·8·16초 간격 최대 4회).
-3. 사용자에게 요약(시장 판정 한 줄, 매도 검토 종목, 5종목과 매수 구간)과 리포트 링크
+3. 사용자에게 요약(시장 판정 한 줄, 매도 검토 종목, 10종목 비중과 매수 구간)과 리포트 링크
    `https://github.com/alephnull-hub/stock/blob/main/<리포트 경로>` 를 알린다.
 
 ## 6. 웹 대시보드 갱신 (리포트를 쓸 때마다)
 대시보드: https://claude.ai/artifact/U2fNy5KyG9QKSqPnfaPX5v (Dashboard 유형, 페이지 원본 사본은 `dashboard/index.html`)
 1. `data/dashboard_inputs.json` 을 이번 리포트 내용으로 고친다(facts의 판정·요약 문장·report_date/report_path, thermometer 점수, macro, pricedin, events, watchouts, sectors, picks_detail의 밸류에이션과 '지금 할 일'). 새 추천이 생기면 picks_detail에 티커를 추가한다.
-2. `python3 scripts/market_snapshot.py` 를 먼저 돌린 뒤 `python3 scripts/build_dashboard.py <스크래치폴더>/dash` 로 JSON 15개를 만든다(미국 후보 `us_candidates` 포함).
+2. `python3 scripts/market_snapshot.py` 를 먼저 돌린 뒤 `python3 scripts/build_dashboard.py <스크래치폴더>/dash` 로 JSON을 만든다(미국 후보 `us_candidates`, 성장성 `growth` 포함). 추천 카드는 `portfolio` 순서대로 나온다.
 3. 각 JSON을 Artifact 도구 `action: publish`, `url`: 위 주소, `asset: true`, `file_path` 로 하나씩 올린다(결과의 `/_blob/<id>` 를 기록).
 4. ArtifactData 로 `datasets/<id>` 를 읽어 version을 확인하고, `update` 로 `source.url`·`source.name`·`updated: {at: ISO 시각, by: "Claude (리포트 이름)"}` 만 바꾼다(batch, 각 항목에 if_version).
 5. 페이지 구조를 바꿀 때만 `files/index.html` 을 고친다(먼저 읽고, `dashboard/index.html` 사본도 같이 갱신). 그 뒤 `data/users/me` 의 `check` 문서를 읽어 실패가 없는지 확인한다.

@@ -8,7 +8,7 @@
       data/recommendations.csv, data/position_reviews.csv, data/blog_insights.csv, README.md 리포트 목록
 출력: <출력폴더>/<dataset>.json  — 각 파일을 대시보드에 올리고 datasets/<id> 의 url·updated 를 갱신한다.
 """
-import csv, json, os, re, sys, time, datetime, urllib.request, urllib.parse
+import csv, json, math, os, re, sys, time, datetime, urllib.request, urllib.parse
 from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -72,17 +72,14 @@ def main():
     ds["watchouts"] = inp["watchouts"]
     ds["sectors"] = inp["sectors"]
 
-    # 추천: 종목별 마지막 추천 행 중 마지막 점검 판정이 '매도'가 아닌 것(최대 5개) + 현재가·수익률
+    # 추천: data/dashboard_inputs.json 의 portfolio(코어 4 + 위성 6, 권장 비중) 순서대로, 각 종목의 마지막 추천 행으로 채운다
     recs = list(csv.DictReader(open(os.path.join(ROOT, "data", "recommendations.csv"))))
-    revs = list(csv.DictReader(open(os.path.join(ROOT, "data", "position_reviews.csv"))))
-    last_status = {}
-    for v in sorted(revs, key=lambda v: v["date"]):
-        last_status[v["ticker"]] = v["status"]
     latest = {}
     for r in recs:
         latest[r["ticker"]] = r
-    active = [r for t, r in latest.items() if last_status.get(t) not in ("매도", "교체")]
-    active = sorted(active, key=lambda r: (r["date"], -int(r["rank"])), reverse=True)[:5]
+    portfolio = inp["portfolio"]
+    active = [latest[p["ticker"]] for p in portfolio]
+    slot = {p["ticker"]: p for p in portfolio}
     gold_g = mk["GC=F"]["last"] * mk["KRW=X"]["last"] / 31.1035
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import market_snapshot as ms
@@ -101,7 +98,13 @@ def main():
         det = inp["picks_detail"].get(r["ticker"], {})
         now = now_price(r, det)
         rec = float(r["price"])
-        picks.append({"rank": int(r["rank"]), "name": r["name"], "ticker": r["ticker"], "sector": r["sector"], "kind": r["type"],
+        sl = slot[r["ticker"]]
+        _, wk = ms.history(r["ticker"] if r["ticker"] != "KRX-GOLD" else "GC=F", "1y", "1wk")
+        closes = [c for _, c in wk]
+        lr = [math.log(b2 / a2) for a2, b2 in zip(closes, closes[1:])]
+        vol = (sum((x - sum(lr) / len(lr)) ** 2 for x in lr) / len(lr)) ** 0.5 * math.sqrt(52) * 100 if len(lr) > 10 else None
+        picks.append({"rank": portfolio.index(sl) + 1, "role": sl["role"], "weight": sl["weight"], "country": sl["country"],
+                      "ai": sl["ai"], "vol": round(vol) if vol else None, "name": r["name"], "ticker": r["ticker"], "sector": r["sector"], "kind": r["type"],
                       "rec_date": r["date"], "rec_price": rec, "now_price": now, "unit": r["currency"],
                       "ret_pct": round((now / rec - 1) * 100, 1) if now else None,
                       "buy1": float(r["buy_zone_1"]), "buy2": float(r["buy_zone_2"]), "buy3": float(r["buy_zone_3"]),
@@ -109,6 +112,19 @@ def main():
                       "per": det.get("per"), "fwd_per": det.get("fwd_per"), "pbr": det.get("pbr"), "pcr": det.get("pcr"), "psr": det.get("psr"),
                       "thesis": r["thesis"], "risk": r["key_risk"], "sell_trigger": r["sell_trigger"], "action": det.get("action", "")})
     ds["picks"] = sorted(picks, key=lambda p: p["rank"])
+
+    # 비중 점검(METHODOLOGY 4-7): 상한과 비교한 결과
+    sat = [p for p in ds["picks"] if p["role"] == "위성"]
+    checks = [{"check": "코어 비중 합계", "value": sum(p["weight"] for p in ds["picks"] if p["role"] == "코어"), "limit": 60, "kind": "target"},
+              {"check": "위성 비중 합계", "value": sum(p["weight"] for p in sat), "limit": 40, "kind": "target"},
+              {"check": "개별주 1종목 최대", "value": max((p["weight"] for p in sat), default=0), "limit": 10, "kind": "max"},
+              {"check": "변동성 50% 초과 종목 최대", "value": max((p["weight"] for p in sat if (p["vol"] or 0) > 50), default=0), "limit": 7, "kind": "max"},
+              {"check": "AI 투자 사이클 개별주 합계", "value": sum(p["weight"] for p in sat if p["ai"]), "limit": 30, "kind": "max"}]
+    for ctry in sorted({p["country"] for p in sat}):
+        checks.append({"check": f"개별주 국가 합계 ({ctry})", "value": sum(p["weight"] for p in sat if p["country"] == ctry), "limit": 25, "kind": "max"})
+    for c in checks:
+        c["ok"] = "충족" if (c["value"] == c["limit"] if c["kind"] == "target" else c["value"] <= c["limit"]) else "초과"
+    ds["weight_checks"] = checks
 
     ds["reviews"] = [{"at": r["date"], "ticker": r["ticker"], "name": r["name"], "price": float(r["price"]),
                       "ret_pct": float(r["return_pct"]), "status": r["status"], "reason": r["reason"], "key": f"{r['date']}|{r['ticker']}"}

@@ -98,13 +98,25 @@
       </div>
     </div>
 
-    <h2 class="lr-section-title" id="picks">이번 추천 5종목</h2>
-    <p class="lr-note">시장 점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
+    <h2 class="lr-section-title" id="picks">추천 포트폴리오 10종목 (코어 4 + 위성 6)</h2>
+    <p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=portfolio_note">—</p>
+    <p class="lr-note">카드의 비중은 전체 투자금 대비 권장 비중입니다. 시장 점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
     <div class="lr-grid" data-draw="picks" data-source="picks reviews">—</div>
+
+    <div class="lr-card" id="weight-checks">
+      <h2>비중 점검</h2>
+      <p class="lr-note">코어 60%·위성 40%를 맞추고, 개별주 1종목 10%(변동성 연 50% 초과는 7%), 나라별 개별주 25%, AI 투자 사이클 개별주 30% 상한을 지킵니다.</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="weight_checks" data-row-key="check">
+          <thead><tr><th data-field="check">항목</th><th class="r" data-field="value">현재(%)</th><th class="r" data-field="limit">기준(%)</th><th data-field="ok">결과</th></tr></thead>
+          <tbody data-draw="checks-body" data-source="weight_checks"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="lr-card" id="us-candidates">
       <h2>미국 후보 점검</h2>
-      <p class="lr-note">한국·미국 종목을 같은 기준으로 비교하고, 원칙적으로 5종목 중 1개 이상은 미국 상장 종목으로 고릅니다. 매수 구간은 달러 기준 잠정치입니다.</p>
+      <p class="lr-note">한국·미국 종목을 같은 기준으로 비교하고, 원칙적으로 위성 6종목 중 1개 이상은 미국 상장 종목으로 고릅니다. 매수 구간은 달러 기준 잠정치입니다.</p>
       <p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=us_pick_note">—</p>
       <div class="lr-tablebox">
         <table class="lr-table" data-source="us_candidates" data-row-key="ticker">
@@ -350,8 +362,8 @@
     const reviews = LR.rows('reviews') || [];
     el.replaceChildren();
     if (!picks) { el.textContent = '—'; return; }
-    const unitText = (u) => u === 'KRW' ? '원' : u === 'KRW/g' ? '원/g' : u === 'USD' ? '달러' : u;
-    const nd = (p) => p.unit === 'USD' ? 2 : 0;
+    const unitText = (u) => u === 'KRW' ? '원' : u === 'KRW/g' ? '원/g' : u === 'USD' ? '달러' : u === 'EUR' ? '유로' : u;
+    const nd = (p) => p.unit === 'USD' || p.unit === 'EUR' ? 2 : 0;
     const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const mark = (n, field, ticker) => { n.dataset.source = 'picks'; n.dataset.field = field; n.dataset.where = 'ticker=' + encodeURIComponent(ticker); return n; };
     picks.forEach((p) => {
@@ -359,7 +371,8 @@
       const head = mk('div', 'lr-pick-head');
       const t = mk('div');
       t.append(mark(mk('h3', null, p.name), 'name', p.ticker));
-      t.append(mk('span', 'lr-label', p.sector + ' · ' + p.kind + ' · ' + p.ticker));
+      const tag = mk('div', 'lr-row'); tag.append(mk('span', 'lr-pill ' + (p.role === '코어' ? 'lr-muted' : 'lr-warn'), p.role), mark(mk('b', 'lr-num', p.weight + '%'), 'weight', p.ticker), mk('span', 'lr-muted', '권장 비중'));
+      t.append(tag, mk('span', 'lr-label', p.sector + ' · ' + p.kind + ' · ' + p.ticker + (p.vol != null ? ' · 1년 변동성 ' + p.vol + '%' : '')));
       const latest = reviews.filter((r) => r.ticker === p.ticker).sort((a, b) => a.at < b.at ? 1 : -1)[0];
       const st = latest ? latest.status : '신규';
       const pill = mk('span', 'lr-pill ' + (st === '매도' ? 'lr-bad' : st === '비중 축소' || st === '관찰' ? 'lr-warn' : 'lr-ok'), st);
@@ -477,6 +490,11 @@
     LR.td(tr, r.peg == null ? '-' : LR.num(r.peg, 1), 'r'); LR.td(tr, LR.num(r.rank_sum), 'r');
     const c = tr.insertCell(); if (r.picked) { const s = document.createElement('span'); s.className = 'lr-pill lr-ok'; s.textContent = r.picked; c.append(s); }
     LR.td(tr, r.filter, 'lr-wrap lr-muted');
+  });
+
+  body('checks-body', 'weight_checks', 'check', (tr, r) => {
+    LR.td(tr, r.check); LR.td(tr, LR.num(r.value), 'r'); LR.td(tr, (r.kind === 'target' ? '' : '≤ ') + LR.num(r.limit), 'r');
+    const c = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.ok === '충족' ? 'lr-ok' : 'lr-bad'); s.textContent = r.ok; c.append(s);
   });
 
   dash.draw('priced', (ul) => {
