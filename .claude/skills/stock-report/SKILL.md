@@ -20,6 +20,7 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
 1. 시장 지표 + 지난 추천 종목 + 이번 주 후보 종목:
    `python3 scripts/market_snapshot.py --save <지난 추천 티커들> <후보 티커들>`
    (국내 종목은 `005930.KS` 형식, 코스닥은 `.KQ`)
+   - **미국 후보도 반드시 포함한다**(METHODOLOGY 4-4). `data/dashboard_inputs.json`의 `us_candidates` 티커를 기본으로 넣고, 업종 점수표 상위 업종의 미국 대표 종목을 더한다.
    - Yahoo의 비율(PER·PBR·PCR)은 며칠 전 가격 기준일 수 있다. 장중 급등락이 있으면 네이버 EPS·BPS(`https://m.stock.naver.com/api/stock/<코드>/integration`)로 현재가 기준으로 다시 계산한다.
    - 추천 이력의 `KRX-GOLD`(금현물)는 `GC=F × KRW=X ÷ 31.1035` 로 원/g 이론가를 계산해 추적한다.
 2. 웹 검색(기본 standard 모드)으로 보강:
@@ -36,11 +37,12 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
 3. **거시·환율이 단기적으로 가격에 반영된 정도**: 성장률 조정, 금리, 환율 → 한국/미국 주식과 금에 각각 무엇을 의미하는지
 4. **블로그 검토**: 새 경제 글마다 반영/일부 반영/반론/참고 판정 → `data/blog_insights.csv` 에 행 추가. 과거 주장 중 결과가 확인된 것은 `outcome` 갱신
 5. **업종 점수표**: METHODOLOGY 3장. 지난주 대비 점수 변화와 이유
-6. **이번 주 3종목**: 서로 다른 업종. 시장이 고평가 이상이면 방어형 1개 포함. 재추천이면 표시
+6. **미국 후보 점검**: 미국 후보 5개 이상을 표로 판정(후보/대기/관찰/제외) → `data/dashboard_inputs.json`의 `us_candidates` 갱신
+7. **이번 주 3종목**: 한국·미국 후보를 합쳐 고른다. 서로 다른 업종. 원칙적으로 1개 이상은 미국 상장 종목(안 넣으면 이유와 조건을 쓴다). 시장이 고평가 이상이면 방어형 1개 포함. 재추천이면 표시
    → `data/recommendations.csv` 에 3행 추가
 
 ## 4. 리포트 양식 (`reports/TEMPLATE.md` 복사해서 채움)
-섹션 순서: 요약 → 🚨 매도 검토 → 시장 온도계 → 거시·환율 → 블로그 검토 → 업종 점수표 → 이번 주 3종목 → 지난 추천 추적 → 출처 → 면책
+섹션 순서: 요약 → 🚨 매도 검토 → 시장 온도계 → 거시·환율 → 블로그 검토 → 업종 점수표 → 미국 후보 점검 → 이번 주 3종목 → 지난 추천 추적 → 출처 → 면책
 - 모든 수치에 기준일, 주요 주장에 출처 링크
 - 확인 못 한 수치는 "미확인"으로 적고 추정하지 않는다
 
@@ -58,7 +60,7 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
 ## 6. 웹 대시보드 갱신 (리포트를 쓸 때마다)
 대시보드: https://claude.ai/artifact/U2fNy5KyG9QKSqPnfaPX5v (Dashboard 유형, 페이지 원본 사본은 `dashboard/index.html`)
 1. `data/dashboard_inputs.json` 을 이번 리포트 내용으로 고친다(facts의 판정·요약 문장·report_date/report_path, thermometer 점수, macro, pricedin, events, watchouts, sectors, picks_detail의 밸류에이션과 '지금 할 일'). 새 추천이 생기면 picks_detail에 티커를 추가한다.
-2. `python3 scripts/market_snapshot.py` 를 먼저 돌린 뒤 `python3 scripts/build_dashboard.py <스크래치폴더>/dash` 로 JSON 14개를 만든다.
+2. `python3 scripts/market_snapshot.py` 를 먼저 돌린 뒤 `python3 scripts/build_dashboard.py <스크래치폴더>/dash` 로 JSON 15개를 만든다(미국 후보 `us_candidates` 포함).
 3. 각 JSON을 Artifact 도구 `action: publish`, `url`: 위 주소, `asset: true`, `file_path` 로 하나씩 올린다(결과의 `/_blob/<id>` 를 기록).
 4. ArtifactData 로 `datasets/<id>` 를 읽어 version을 확인하고, `update` 로 `source.url`·`source.name`·`updated: {at: ISO 시각, by: "Claude (리포트 이름)"}` 만 바꾼다(batch, 각 항목에 if_version).
 5. 페이지 구조를 바꿀 때만 `files/index.html` 을 고친다(먼저 읽고, `dashboard/index.html` 사본도 같이 갱신). 그 뒤 `data/users/me` 의 `check` 문서를 읽어 실패가 없는지 확인한다.

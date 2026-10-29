@@ -114,6 +114,18 @@ def main():
                          for b in sorted(blog, key=lambda b: b["date"], reverse=True)
                          if b["date"] >= cutoff and b["verdict"] != "참고"]
 
+    # 미국 후보: 판단은 inputs, 가격·밸류에이션은 market_snapshot 의 수집 함수로 새로 가져온다
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import market_snapshot as ms
+    us = []
+    for c in inp.get("us_candidates", []):
+        r = ms.stock_row(c["ticker"])
+        price = r.get("price")
+        us.append({**c, "price": price, "from_high": r.get("from_high"), "per": r.get("per") and round(r["per"], 1),
+                   "pcr": r.get("pcr") and round(r["pcr"], 1), "psr": r.get("psr") and round(r["psr"], 1),
+                   "zone": ("1차 구간 안" if price and price <= c["buy1"] else "1차 구간 위") if price else "-"})
+    ds["us_candidates"] = us
+
     # 리포트 목록: README 표에서 읽는다
     reps = []
     for line in open(os.path.join(ROOT, "README.md")):

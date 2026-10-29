@@ -99,8 +99,20 @@
     </div>
 
     <h2 class="lr-section-title" id="picks">이번 추천 3종목</h2>
-    <p class="lr-note">점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
+    <p class="lr-note">시장 점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
     <div class="lr-grid" data-draw="picks" data-source="picks reviews">—</div>
+
+    <div class="lr-card" id="us-candidates">
+      <h2>미국 후보 점검</h2>
+      <p class="lr-note">한국·미국 종목을 같은 기준으로 비교하고, 원칙적으로 3종목 중 1개 이상은 미국 상장 종목으로 고릅니다. 매수 구간은 달러 기준 잠정치입니다.</p>
+      <p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=us_pick_note">—</p>
+      <div class="lr-tablebox">
+        <table class="lr-table" data-source="us_candidates" data-row-key="ticker">
+          <thead><tr><th data-field="name">종목</th><th data-field="sector">업종</th><th class="r" data-field="price">현재가($)</th><th class="r" data-field="from_high">52주 고점 대비</th><th class="r" data-field="per">PER</th><th class="r" data-field="pcr">PCR</th><th class="r" data-field="buy1">1차 매수 구간</th><th class="r" data-field="buy2">2차</th><th class="r" data-field="buy3">3차</th><th data-field="verdict">판정</th><th data-field="reason">이유</th></tr></thead>
+          <tbody data-draw="us-body" data-source="us_candidates"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="lr-card" id="sell-review">
       <h2>🚨 매도 검토 (성장동력 점검)</h2>
@@ -436,6 +448,15 @@
     const c = tr.insertCell(); const a = document.createElement('a'); a.href = r.url; a.textContent = r.date; c.append(a);
     LR.td(tr, r.kind); LR.td(tr, r.temp); LR.td(tr, r.picks, 'lr-wrap'); LR.td(tr, r.sell, 'lr-wrap');
   });
+
+  body('us-body', 'us_candidates', 'ticker', (tr, r) => {
+    LR.td(tr, r.name + ' (' + r.ticker + ')'); LR.td(tr, r.sector, 'lr-muted');
+    LR.td(tr, LR.num(r.price, 2), 'r'); LR.td(tr, LR.signed(r.from_high), 'r ' + LR.cls(r.from_high));
+    LR.td(tr, r.per == null ? '-' : LR.num(r.per, 1), 'r'); LR.td(tr, r.pcr == null ? '-' : LR.num(r.pcr, 1), 'r');
+    LR.td(tr, LR.num(r.buy1) + ' 이하', 'r' + (r.price && r.price <= r.buy1 ? ' lr-ok' : '')); LR.td(tr, LR.num(r.buy2), 'r'); LR.td(tr, LR.num(r.buy3), 'r');
+    const v = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.verdict === '후보' ? 'lr-ok' : r.verdict === '제외' ? 'lr-bad' : 'lr-warn'); s.textContent = r.verdict; v.append(s);
+    LR.td(tr, r.reason, 'lr-wrap lr-muted');
+  }, (rs) => { const o = { '후보': 0, '대기': 1, '관찰': 2, '제외': 3 }; return rs.sort((a, b) => (o[a.verdict] ?? 9) - (o[b.verdict] ?? 9)); });
 
   dash.draw('priced', (ul) => {
     ul.replaceChildren();
