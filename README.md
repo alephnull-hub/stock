@@ -37,6 +37,7 @@
 ## 도구
 ```bash
 python3 scripts/market_snapshot.py --save 005930.KS NVDA   # 시장 지표 + 종목 밸류에이션(PER/PBR/PCR/PSR)
+python3 scripts/pick_drawdown.py                         # 추천 10종목의 52주 고점 대비 하락폭
 python3 scripts/blog_fetch.py /tmp/blog --update-state      # 블로그 새 글 수집(원문은 저장소 밖에 저장)
 ```
 작성 절차는 [.claude/skills/stock-report/SKILL.md](.claude/skills/stock-report/SKILL.md)에 있습니다.

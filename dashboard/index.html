@@ -380,6 +380,7 @@
       const price = mk('div', 'lr-row');
       price.append(mark(mk('span', 'lr-big lr-num', LR.num(p.now_price, nd(p))), 'now_price', p.ticker), mk('span', 'lr-muted', unitText(p.unit)));
       price.append(mk('span', 'lr-muted', '추천 후'), mark(mk('span', 'lr-num ' + LR.cls(p.ret_pct), LR.signed(p.ret_pct)), 'ret_pct', p.ticker));
+      if (p.from_high != null) price.append(mk('span', 'lr-muted', '52주 고점 대비'), mark(mk('span', 'lr-num ' + LR.cls(p.from_high), LR.signed(p.from_high)), 'from_high', p.ticker));
       const zones = mk('div', 'lr-zones');
       [['1차', 'buy1'], ['2차', 'buy2'], ['3차', 'buy3']].forEach(([lab, f], i, arr) => {
         const lower = i < arr.length - 1 ? p[arr[i + 1][1]] : -Infinity;

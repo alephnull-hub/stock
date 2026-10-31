@@ -83,6 +83,7 @@ def main():
     gold_g = mk["GC=F"]["last"] * mk["KRW=X"]["last"] / 31.1035
     sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import market_snapshot as ms
+    import pick_drawdown as pdd
 
     def now_price(r, det):
         t = r["ticker"]
@@ -103,10 +104,12 @@ def main():
         closes = [c for _, c in wk]
         lr = [math.log(b2 / a2) for a2, b2 in zip(closes, closes[1:])]
         vol = (sum((x - sum(lr) / len(lr)) ** 2 for x in lr) / len(lr)) ** 0.5 * math.sqrt(52) * 100 if len(lr) > 10 else None
+        dd = pdd.drawdown(r["ticker"], now)
         picks.append({"rank": portfolio.index(sl) + 1, "role": sl["role"], "weight": sl["weight"], "country": sl["country"],
                       "ai": sl["ai"], "vol": round(vol) if vol else None, "name": r["name"], "ticker": r["ticker"], "sector": r["sector"], "kind": r["type"],
                       "rec_date": r["date"], "rec_price": rec, "now_price": now, "unit": r["currency"],
                       "ret_pct": round((now / rec - 1) * 100, 1) if now else None,
+                      "high_52w": dd["high_52w"], "from_high": dd["from_high"],
                       "buy1": float(r["buy_zone_1"]), "buy2": float(r["buy_zone_2"]), "buy3": float(r["buy_zone_3"]),
                       "in_zone": "1차 구간 안" if now and now <= float(r["buy_zone_1"]) else "1차 구간 위",
                       "per": det.get("per"), "fwd_per": det.get("fwd_per"), "pbr": det.get("pbr"), "pcr": det.get("pcr"), "psr": det.get("psr"),
