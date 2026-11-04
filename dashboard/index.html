@@ -142,7 +142,7 @@
       <p class="lr-note">10년 성장동력이 약해졌거나 구조적 역풍이 확인된 영역입니다.</p>
       <div class="lr-tablebox">
         <table class="lr-table" data-source="watchouts" data-row-key="area">
-          <thead><tr><th data-field="area">영역</th><th data-field="status">판단</th><th data-field="reason">근거</th></tr></thead>
+          <thead><tr><th data-field="area">영역</th><th data-field="status">판단</th><th data-field="stocks">해당 종목 (52주 고점 대비)</th><th data-field="reason">근거</th></tr></thead>
           <tbody data-draw="watch-body" data-source="watchouts"></tbody>
         </table>
       </div>
@@ -425,6 +425,7 @@
   body('watch-body', 'watchouts', 'area', (tr, r) => {
     LR.td(tr, r.area, 'lr-wrap');
     const c = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.level === 'bad' ? 'lr-bad' : 'lr-warn'); s.textContent = r.status; c.append(s);
+    LR.td(tr, r.stocks || '—', 'lr-wrap');
     LR.td(tr, r.reason, 'lr-wrap');
   });
 

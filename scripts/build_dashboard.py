@@ -69,7 +69,16 @@ def main():
     ds["macro"] = inp["macro"]
     ds["pricedin"] = inp["pricedin"]
     ds["events"] = inp["events"]
-    ds["watchouts"] = inp["watchouts"]
+    # 점검 영역별 해당 종목: 이름(티커) 52주 고점 대비. 종목 목록은 dashboard_inputs.json 의 watchouts[].tickers
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import pick_drawdown as pdd
+    ds["watchouts"] = []
+    for w in inp["watchouts"]:
+        names = []
+        for t, name in w.get("tickers", []):
+            fh = pdd.drawdown(t, pdd.now_price(t))["from_high"]
+            names.append(f"{name}({t.split('.')[0] if t.endswith(('.KS', '.KQ')) else t}) {'' if fh is None else f'{fh:+.0f}%'}".strip())
+        ds["watchouts"].append({k: v for k, v in w.items() if k != "tickers"} | {"stocks": " · ".join(names)})
     ds["sectors"] = inp["sectors"]
 
     # 추천: data/dashboard_inputs.json 의 portfolio(코어 4 + 위성 6, 권장 비중) 순서대로, 각 종목의 마지막 추천 행으로 채운다
@@ -81,9 +90,7 @@ def main():
     active = [latest[p["ticker"]] for p in portfolio]
     slot = {p["ticker"]: p for p in portfolio}
     gold_g = mk["GC=F"]["last"] * mk["KRW=X"]["last"] / 31.1035
-    sys.path.insert(0, os.path.join(ROOT, "scripts"))
     import market_snapshot as ms
-    import pick_drawdown as pdd
 
     def now_price(r, det):
         t = r["ticker"]
