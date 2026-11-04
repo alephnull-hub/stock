@@ -101,6 +101,14 @@ def main():
         meta, _ = ms.history(t, "5d")
         return meta and meta.get("regularMarketPrice")
 
+    # 오늘 환율(원화 환산용): 달러·유로 1단위당 원
+    fx = {}
+    for cur, sym in (("USD", "KRW=X"), ("EUR", "EURKRW=X")):
+        meta, _ = ms.history(sym, "5d")
+        fx[cur] = meta and meta.get("regularMarketPrice")
+    fx_at = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%m/%d %H:%M")
+    krw = lambda v, cur: round(v * fx[cur]) if v is not None and fx.get(cur) else None
+
     picks = []
     for r in active:
         det = inp["picks_detail"].get(r["ticker"], {})
@@ -120,6 +128,9 @@ def main():
                       "buy1": float(r["buy_zone_1"]), "buy2": float(r["buy_zone_2"]), "buy3": float(r["buy_zone_3"]),
                       "in_zone": "1차 구간 안" if now and now <= float(r["buy_zone_1"]) else "1차 구간 위",
                       "per": det.get("per"), "fwd_per": det.get("fwd_per"), "pbr": det.get("pbr"), "pcr": det.get("pcr"), "psr": det.get("psr"),
+                      **({"fx": round(fx[r["currency"]], 2), "now_krw": krw(now, r["currency"]), "rec_krw": krw(rec, r["currency"]),
+                          "buy1_krw": krw(float(r["buy_zone_1"]), r["currency"]), "buy2_krw": krw(float(r["buy_zone_2"]), r["currency"]),
+                          "buy3_krw": krw(float(r["buy_zone_3"]), r["currency"])} if fx.get(r["currency"]) else {}),
                       "thesis": r["thesis"], "risk": r["key_risk"], "sell_trigger": r["sell_trigger"], "action": det.get("action", "")})
     ds["picks"] = sorted(picks, key=lambda p: p["rank"])
 
@@ -167,8 +178,11 @@ def main():
         price = r.get("price")
         us.append({**c, "price": price, "from_high": r.get("from_high"), "per": r.get("per") and round(r["per"], 1),
                    "pcr": r.get("pcr") and round(r["pcr"], 1), "psr": r.get("psr") and round(r["psr"], 1),
+                   "price_krw": krw(price, "USD"), "buy1_krw": krw(c["buy1"], "USD"),
                    "zone": ("1차 구간 안" if price and price <= c["buy1"] else "1차 구간 위") if price else "-"})
     ds["us_candidates"] = us
+    ds["facts"] = ds["facts"] + [{"key": "fx_note", "value": "원화 환산은 " + fx_at + " 환율 기준: "
+                                  + " · ".join(f"1{'달러' if c == 'USD' else '유로'} = {v:,.0f}원" for c, v in fx.items() if v)}]
 
     # 세부 업종 내 성장성 비교(METHODOLOGY 4-6): growth_compare.py --json 결과 + 지속성 필터 메모
     gpath = os.path.join(ROOT, "data", "growth_compare_raw.json")

@@ -101,6 +101,7 @@
     <h2 class="lr-section-title" id="picks">추천 포트폴리오 10종목 (코어 4 + 위성 6)</h2>
     <p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=portfolio_note">—</p>
     <p class="lr-note">카드의 비중은 전체 투자금 대비 권장 비중입니다. 시장 점수 범위는 -2(매우 비쌈)부터 +2(매우 쌈)까지입니다. 매수 구간은 3단계로 나눠 사는 가격이고, 현재가가 들어간 구간에 테두리가 표시됩니다.</p>
+    <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=fx_note">—</p>
     <div class="lr-grid" data-draw="picks" data-source="picks reviews">—</div>
 
     <div class="lr-card" id="weight-checks">
@@ -118,6 +119,7 @@
       <h2>미국 후보 점검</h2>
       <p class="lr-note">한국·미국 종목을 같은 기준으로 비교하고, 원칙적으로 위성 6종목 중 1개 이상은 미국 상장 종목으로 고릅니다. 매수 구간은 달러 기준 잠정치입니다.</p>
       <p class="lr-text" data-draw="fact" data-source="facts" data-field="value" data-where="key=us_pick_note">—</p>
+      <p class="lr-note" data-draw="fact" data-source="facts" data-field="value" data-where="key=fx_note">—</p>
       <div class="lr-tablebox">
         <table class="lr-table" data-source="us_candidates" data-row-key="ticker">
           <thead><tr><th data-field="name">종목</th><th data-field="sector">업종</th><th class="r" data-field="price">현재가($)</th><th class="r" data-field="from_high">52주 고점 대비</th><th class="r" data-field="per">PER</th><th class="r" data-field="pcr">PCR</th><th class="r" data-field="buy1">1차 매수 구간</th><th class="r" data-field="buy2">2차</th><th class="r" data-field="buy3">3차</th><th data-field="verdict">판정</th><th data-field="reason">이유</th></tr></thead>
@@ -379,6 +381,7 @@
       head.append(t, pill);
       const price = mk('div', 'lr-row');
       price.append(mark(mk('span', 'lr-big lr-num', LR.num(p.now_price, nd(p))), 'now_price', p.ticker), mk('span', 'lr-muted', unitText(p.unit)));
+      if (p.now_krw != null) price.append(mark(mk('span', 'lr-muted lr-num', '≈ ' + LR.num(p.now_krw) + '원'), 'now_krw', p.ticker));
       price.append(mk('span', 'lr-muted', '추천 후'), mark(mk('span', 'lr-num ' + LR.cls(p.ret_pct), LR.signed(p.ret_pct)), 'ret_pct', p.ticker));
       if (p.from_high != null) price.append(mk('span', 'lr-muted', '52주 고점 대비'), mark(mk('span', 'lr-num ' + LR.cls(p.from_high), LR.signed(p.from_high)), 'from_high', p.ticker));
       const zones = mk('div', 'lr-zones');
@@ -387,6 +390,7 @@
         const z = mk('div', 'lr-zone' + (p.now_price <= p[f] && p.now_price > lower ? ' on' : ''));
         const v = mk('span', 'lr-num'); v.append(mark(mk('b', null, LR.num(p[f], nd(p) && p[f] % 1 ? 2 : 0)), f, p.ticker), document.createTextNode(' 이하'));
         z.append(mk('span', 'lr-label', lab + ' 매수 구간'), v);
+        if (p[f + '_krw'] != null) z.append(mark(mk('span', 'lr-muted lr-num', '≈ ' + LR.num(p[f + '_krw']) + '원'), f + '_krw', p.ticker));
         zones.append(z);
       });
       const kv = mk('div', 'lr-kv');
@@ -478,9 +482,9 @@
 
   body('us-body', 'us_candidates', 'ticker', (tr, r) => {
     LR.td(tr, r.name + ' (' + r.ticker + ')'); LR.td(tr, r.sector, 'lr-muted');
-    LR.td(tr, LR.num(r.price, 2), 'r'); LR.td(tr, LR.signed(r.from_high), 'r ' + LR.cls(r.from_high));
+    LR.td(tr, LR.num(r.price, 2) + (r.price_krw != null ? ' (≈' + LR.num(r.price_krw) + '원)' : ''), 'r'); LR.td(tr, LR.signed(r.from_high), 'r ' + LR.cls(r.from_high));
     LR.td(tr, r.per == null ? '-' : LR.num(r.per, 1), 'r'); LR.td(tr, r.pcr == null ? '-' : LR.num(r.pcr, 1), 'r');
-    LR.td(tr, LR.num(r.buy1) + ' 이하', 'r' + (r.price && r.price <= r.buy1 ? ' lr-ok' : '')); LR.td(tr, LR.num(r.buy2), 'r'); LR.td(tr, LR.num(r.buy3), 'r');
+    LR.td(tr, LR.num(r.buy1) + ' 이하' + (r.buy1_krw != null ? ' (≈' + LR.num(r.buy1_krw) + '원)' : ''), 'r' + (r.price && r.price <= r.buy1 ? ' lr-ok' : '')); LR.td(tr, LR.num(r.buy2), 'r'); LR.td(tr, LR.num(r.buy3), 'r');
     const v = tr.insertCell(); const s = document.createElement('span'); s.className = 'lr-pill ' + (r.verdict === '후보' || r.verdict === '편입' ? 'lr-ok' : r.verdict === '제외' ? 'lr-bad' : 'lr-warn'); s.textContent = r.verdict; v.append(s);
     LR.td(tr, r.reason, 'lr-wrap lr-muted');
   }, (rs) => { const o = { '편입': -1, '후보': 0, '대기': 1, '관찰': 2, '제외': 3 }; return rs.sort((a, b) => (o[a.verdict] ?? 9) - (o[b.verdict] ?? 9)); });

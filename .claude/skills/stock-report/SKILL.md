@@ -23,6 +23,7 @@ description: 10년 장기투자 주간/수시 리포트 작성. "지금 조사�
    - **미국 후보도 반드시 포함한다**(METHODOLOGY 4-4). `data/dashboard_inputs.json`의 `us_candidates` 티커를 기본으로 넣고, 업종 점수표 상위 업종의 미국 대표 종목을 더한다.
    - Yahoo의 비율(PER·PBR·PCR)은 며칠 전 가격 기준일 수 있다. 장중 급등락이 있으면 네이버 EPS·BPS(`https://m.stock.naver.com/api/stock/<코드>/integration`)로 현재가 기준으로 다시 계산한다.
    - **추천 10종목의 52주 고점 대비 하락폭**: `python3 scripts/pick_drawdown.py` (portfolio 10종목, 1년 일간 종가 기준). 결과를 매도 검토 표와 포트폴리오 표의 「52주 고점 대비」 열에 적는다.
+   - **달러·유로 가격의 원화 환산**: 현재가·추천가·매수 구간 옆에 그날 환율(KRW=X, EURKRW=X)로 환산한 원화를 괄호로 적고 적용 환율·시각을 밝힌다. 대시보드는 `build_dashboard.py`가 자동으로 넣는다.
    - 추천 이력의 `KRX-GOLD`(금현물)는 `GC=F × KRW=X ÷ 31.1035` 로 원/g 이론가를 계산해 추적한다.
 2. 웹 검색(기본 standard 모드)으로 보강:
    - 코스피·코스닥 12개월 예상 PER/PBR, S&P500 예상 PER(FactSet Earnings Insight 최신호), CAPE(multpl), 버핏지수
