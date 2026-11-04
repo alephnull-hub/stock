@@ -44,12 +44,16 @@ def drawdown(ticker, now=None):
 
 
 def now_price(ticker):
-    """한국 종목은 네이버 현재가(야후 일봉 마지막 값은 장 마감 전 값일 수 있다), 그 외는 일봉 마지막 종가."""
+    """한국 종목은 네이버 현재가, 그 외는 야후 현재가(1년 일봉에는 마지막 거래일이 빠질 때가 있다)."""
     if ticker.endswith((".KS", ".KQ")):
         d = ms.get_json(f"https://m.stock.naver.com/api/stock/{ticker.split('.')[0]}/basic") or {}
         v = d.get("closePrice", "").replace(",", "")
         return float(v) if v else None
-    return None
+    if ticker == "KRX-GOLD":
+        g, fx = ms.history("GC=F", "5d")[0], ms.history("KRW=X", "5d")[0]
+        return g and fx and g["regularMarketPrice"] * fx["regularMarketPrice"] / 31.1035
+    meta, _ = ms.history(ticker, "5d")
+    return meta and meta.get("regularMarketPrice")
 
 
 def main():
